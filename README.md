@@ -12,17 +12,16 @@ Coinbase Market Data Stream is a single‑page web UI for visualizing real‑tim
 - “Latest Prices” cards showing last price, bid/ask, trend arrows, and update counts per product.
 - Scrollable live feed of formatted ticker, trade, and order‑book events.
 - Dark/light mode toggle with preference stored in localStorage.
+- *NEW:* options now rolled up into menu
+- *NEW:* cryptocurrency logos
+- *NEW:* resizable live data box and ability to show/hide live data feed.
 
-# Light Dashboard
-
-<img alt="Coinbase Market Data Stream Light Dashboard" src="https://github.com/user-attachments/assets/1bc669a1-6966-48c1-832b-e92b473c5aaf" />
-
-# Dark Dashboard
-
-<img alt="Coinbase Market Data Stream Dark Dashboard" src="https://github.com/user-attachments/assets/a92c7c6f-7fb4-4710-94a8-d18ce18c3cc5" />
 
 ---
 
+<img alt="Light Dashboard now w/options menu" src="https://github.com/user-attachments/assets/f08cd497-f64d-4f7d-ae36-6a6312ac83a8" />
+
+<img alt="Dark Dashboard now w/options " src="https://github.com/user-attachments/assets/6ca2223e-8f93-4789-864b-f1ff2a8ec9e9" />
 
 
 # Coinbase Market Data Stream
@@ -111,4 +110,26 @@ Per‑channel handlers:
 - Adjust price formatting rules in `formatPrice` and `addCommas`.
 - Change card layout or styling via the CSS at the top of the HTML file.
 - Extend channel support (e.g. `candles`, `status`, `user`) by adding new handlers wired from `handleMessage` in line with Coinbase’s documented channel schemas.
+
+
+---
+
+<details>
+
+<summary>Project History</summary>
+
+# Light Dashboard v.1
+
+<img alt="Coinbase Market Data Stream Light Dashboard" src="https://github.com/user-attachments/assets/1bc669a1-6966-48c1-832b-e92b473c5aaf" />
+
+# Dark Dashboard v.1
+
+<img alt="Coinbase Market Data Stream Dark Dashboard" src="https://github.com/user-attachments/assets/a92c7c6f-7fb4-4710-94a8-d18ce18c3cc5" />
+
+# Light Dash v.1a
+<img alt="Light Dashboard now w/options menu" src="https://github.com/user-attachments/assets/90310fd0-8db3-41a3-a99a-9e8a3807900f" />
+
+# Dark Dash v.1a
+
+<img alt="Dark Dashboard now w/options menu" src="https://github.com/user-attachments/assets/5af88028-768e-4395-93ba-8ac88704e8b8" />
 
