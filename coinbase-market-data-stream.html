@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coinbase Market Data Stream</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600&display=swap');
+        
+        :root {
+            --color-bg-primary: rgba(252, 252, 249, 1);
+            --color-text-primary: rgba(19, 52, 59, 1);
+            --color-text-secondary: rgba(98, 108, 113, 1);
+            --color-primary: rgba(33, 128, 141, 1);
+            --color-primary-hover: rgba(29, 116, 128, 1);
+            --color-success: rgba(33, 128, 141, 1);
+            --color-error: rgba(192, 21, 47, 1);
+            --color-warning: rgba(168, 75, 47, 1);
+            --color-border: rgba(94, 82, 64, 0.2);
+            --color-surface: rgba(255, 255, 253, 1);
+            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'Roboto Mono', monospace;
+        }
+
+        :root.dark {
+            --color-bg-primary: rgba(20, 20, 20, 1);
+            --color-text-primary: rgba(240, 240, 240, 1);
+            --color-text-secondary: rgba(150, 150, 150, 1);
+            --color-primary: rgba(50, 200, 220, 1);
+            --color-primary-hover: rgba(40, 180, 200, 1);
+            --color-success: rgba(50, 200, 220, 1);
+            --color-error: rgba(255, 100, 120, 1);
+            --color-warning: rgba(255, 160, 100, 1);
+            --color-border: rgba(80, 80, 80, 0.4);
+            --color-surface: rgba(30, 30, 30, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            color: var(--color-text-secondary);
+            font-size: 14px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+            padding: 20px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--color-text-secondary);
+        }
+
+        input,
+        select {
+            padding: 8px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            font-family: var(--font-family);
+            font-size: 14px;
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(33, 128, 141, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 150ms ease;
+            font-family: var(--font-family);
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--color-border);
+            color: var(--color-text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-surface);
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status.connected {
+            background: rgba(33, 128, 141, 0.15);
+            color: var(--color-success);
+        }
+
+        .status.disconnected {
+            background: rgba(192, 21, 47, 0.15);
+            color: var(--color-error);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status.connected .status-indicator {
+            background: var(--color-success);
+            animation: pulse 2s infinite;
+        }
+
+        .status.disconnected .status-indicator {
+            background: var(--color-error);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            padding: 16px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+        }
+
+        .market-data {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .price-card {
+            padding: 16px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            font-family: var(--font-mono);
+        }
+
+        .price-card h3 {
+            margin: 0 0 12px 0;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .activity-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--color-text-secondary);
+            animation: activity-pulse 1s ease-in-out;
+            flex-shrink: 0;
+        }
+
+        @keyframes activity-pulse {
+            0% {
+                background: var(--color-success);
+                box-shadow: 0 0 0 0 var(--color-success);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(33, 128, 141, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(33, 128, 141, 0);
+            }
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--color-border);
+            font-size: 13px;
+        }
+
+        .price-row:last-child {
+            border-bottom: none;
+        }
+
+        .price-label {
+            color: var(--color-text-secondary);
+            font-size: 11px;
+        }
+
+        .price-value {
+            font-weight: 600;
+            color: var(--color-text-primary);
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .price-up {
+            color: var(--color-success);
+        }
+
+        .price-down {
+            color: var(--color-error);
+        }
+
+        .feed {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 16px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+
+        .feed-entry {
+            padding: 6px 0;
+            border-bottom: 1px solid var(--color-border);
+            color: var(--color-text-secondary);
+        }
+
+        .feed-entry:last-child {
+            border-bottom: none;
+        }
+
+        .feed-time {
+            color: var(--color-text-secondary);
+            font-weight: 500;
+        }
+
+        .feed-data {
+            color: var(--color-text-primary);
+            margin-left: 8px;
+        }
+
+        .empty {
+            color: var(--color-text-secondary);
+            text-align: center;
+            padding: 20px;
+        }
+
+        .update-info {
+            font-size: 10px;
+            color: var(--color-text-secondary);
+        }
+
+        .error-message {
+            padding: 12px 16px;
+            background: rgba(192, 21, 47, 0.15);
+            color: var(--color-error);
+            border: 1px solid rgba(192, 21, 47, 0.3);
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: var(--font-mono);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Coinbase Market Data Stream</h1>
+            <p class="subtitle">Real-time cryptocurrency price data from Coinbase Advanced Trade API</p>
+        </header>
+
+        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div id="status-container"></div>
+            <button id="themeToggle" style="padding: 6px 12px; background: var(--color-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;">🌙 Dark Mode</button>
+        </div>
+
+        <div id="error-container"></div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>Product IDs (comma-separated)</label>
+                <input type="text" id="productIds" value="BTC-USD,ETH-USD,SOL-USD,DOGE-USD,MON-USD,AMP-USD,PEPE-USD,SHIB-USD,BAT-USD,BCH-USD,POL-USD,XRP-USD" placeholder="BTC-USD,ETH-USD">
+            </div>
+            <div class="control-group">
+                <label>Channel</label>
+                <select id="channel">
+                    <option value="ticker">Ticker (Real-time)</option>
+                    <option value="ticker_batch">Ticker Batch (5s)</option>
+                    <option value="market_trades">Market Trades</option>
+                    <option value="level2">Level 2 Orderbook</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Max Feed Entries</label>
+                <input type="number" id="maxEntries" value="100" min="10" max="1000">
+            </div>
+            <div class="button-group" style="grid-column: 1 / -1;">
+                <button class="btn-primary" id="connectBtn">Connect</button>
+                <button class="btn-secondary" id="disconnectBtn" disabled>Disconnect</button>
+                <button class="btn-secondary" id="clearBtn">Clear Feed</button>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Messages Received</div>
+                <div class="stat-value" id="messageCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Connection Time</div>
+                <div class="stat-value" id="connectionTime">--:--</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Data Points</div>
+                <div class="stat-value" id="dataPoints">0</div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <h3>Latest Prices</h3>
+            <div class="market-data" id="priceCards"></div>
+        </div>
+
+        <div>
+            <h3>Live Feed</h3>
+            <div class="feed" id="feed">
+                <div class="empty">Waiting for data... Connect to start streaming.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class CoinbaseMarketStream {
+            constructor() {
+                this.ws = null;
+                this.isConnected = false;
+                this.messageCount = 0;
+                this.dataPoints = new Map();
+                this.feedEntries = [];
+                this.maxEntries = 100;
+                this.connectionStartTime = null;
+                this.connectionTimer = null;
+                this.productIds = [];
+                this.channel = 'ticker';
+            }
+
+            connect(productIds, channel) {
+                if (this.ws) {
+                    this.disconnect();
+                }
+
+                this.productIds = productIds;
+                this.channel = channel;
+                this.messageCount = 0;
+                this.dataPoints.clear();
+                this.feedEntries = [];
+                this.connectionStartTime = Date.now();
+                this.updateConnectionTime();
+                this.connectionTimer = setInterval(() => this.updateConnectionTime(), 1000);
+
+                const wsUrl = 'wss://advanced-trade-ws.coinbase.com';
+                
+                this.ws = new WebSocket(wsUrl);
+
+                this.ws.addEventListener('open', () => {
+                    this.isConnected = true;
+                    this.updateStatus();
+                    this.subscribe();
+                });
+
+                this.ws.addEventListener('message', (event) => {
+                    this.handleMessage(event.data);
+                });
+
+                this.ws.addEventListener('error', (error) => {
+                    this.showError(`WebSocket error: ${error.message}`);
+                });
+
+                this.ws.addEventListener('close', () => {
+                    this.isConnected = false;
+                    this.updateStatus();
+                    clearInterval(this.connectionTimer);
+                });
+            }
+
+            subscribe() {
+                if (!this.isConnected) return;
+
+                const message = {
+                    type: 'subscribe',
+                    channel: this.channel,
+                    product_ids: this.productIds
+                };
+
+                this.ws.send(JSON.stringify(message));
+                this.addFeedEntry(`Subscribed to ${this.channel} channel for: ${this.productIds.join(', ')}`);
+            }
+
+            unsubscribe() {
+                if (!this.isConnected) return;
+
+                const message = {
+                    type: 'unsubscribe',
+                    channel: this.channel,
+                    product_ids: this.productIds
+                };
+
+                this.ws.send(JSON.stringify(message));
+            }
+
+            handleMessage(data) {
+                try {
+                    const message = JSON.parse(data);
+
+                    // Ignore heartbeats completely
+                    if (message.channel === 'heartbeats' || message.type === 'heartbeats') {
+                        return;
+                    }
+
+                    this.messageCount++;
+                    document.getElementById('messageCount').textContent = this.messageCount.toLocaleString();
+
+                    if (message.type === 'subscriptions') {
+                        this.addFeedEntry(`Subscribed to: ${message.subscriptions.map(s => `${s.channel}(${s.product_ids.join(',')})`).join('; ')}`);
+                        return;
+                    }
+
+                    // Handle ticker/market data
+                    if (message.channel === 'ticker' || message.channel === 'ticker_batch') {
+                        this.handleTickerData(message);
+                    } else if (message.channel === 'market_trades') {
+                        this.handleTradeData(message);
+                    } else if (message.channel === 'level2') {
+                        this.handleLevel2Data(message);
+                    }
+
+                    this.renderPriceCards();
+                } catch (error) {
+                    console.error('Message parsing error:', error);
+                    this.addFeedEntry(`Error: ${error.message}`);
+                }
+            }
+
+            handleTickerData(message) {
+                if (message.events && Array.isArray(message.events)) {
+                    message.events.forEach(event => {
+                        // Ticker channels wrap data in 'tickers' array
+                        if (event.tickers && Array.isArray(event.tickers)) {
+                            event.tickers.forEach(ticker => {
+                                const product = ticker.product_id;
+                                const price = ticker.price || 'N/A';
+                                const currentPrice = parseFloat(price);
+                                
+                                // Track price trend (up/down/neutral)
+                                const oldData = this.dataPoints.get(product);
+                                let priceChange = 0;
+                                if (oldData && oldData.price) {
+                                    priceChange = currentPrice - oldData.price;
+                                }
+                                
+                                this.dataPoints.set(product, {
+                                    price: currentPrice,
+                                    productId: product,
+                                    bestBid: ticker.best_bid || 'N/A',
+                                    bestAsk: ticker.best_ask || 'N/A',
+                                    volume24h: ticker.volume_24_h || 'N/A',
+                                    time: new Date().toLocaleTimeString(),
+                                    rawPrice: price,
+                                    priceChange: priceChange,
+                                    lastUpdate: Date.now(),
+                                    updateCount: (oldData?.updateCount || 0) + 1
+                                });
+
+                                const changeIndicator = priceChange > 0 ? '↑' : priceChange < 0 ? '↓' : '→';
+                                const formattedPrice = this.formatPrice(price);
+                                let feedText = `${product}: $${formattedPrice} ${changeIndicator}`;
+                                if (ticker.best_bid && ticker.best_ask) {
+                                    feedText += ` (bid: ${ticker.best_bid}, ask: ${ticker.best_ask})`;
+                                }
+                                this.addFeedEntry(feedText);
+                            });
+                        }
+                    });
+                }
+                document.getElementById('dataPoints').textContent = this.dataPoints.size.toLocaleString();
+            }
+
+            handleTradeData(message) {
+                if (message.events && Array.isArray(message.events)) {
+                    message.events.forEach(event => {
+                        if (event.type === 'snapshot' || event.type === 'update') {
+                            if (event.trades && Array.isArray(event.trades)) {
+                                event.trades.forEach(trade => {
+                                    const product = trade.product_id;
+                                    const tradePrice = parseFloat(trade.price);
+                                    
+                                    // Store trade data for price cards
+                                    const oldData = this.dataPoints.get(product);
+                                    let priceChange = 0;
+                                    if (oldData && oldData.price) {
+                                        priceChange = tradePrice - oldData.price;
+                                    }
+                                    
+                                    this.dataPoints.set(product, {
+                                        price: tradePrice,
+                                        productId: product,
+                                        side: trade.side,
+                                        size: trade.size,
+                                        time: new Date().toLocaleTimeString(),
+                                        rawPrice: trade.price,
+                                        priceChange: priceChange,
+                                        lastUpdate: Date.now(),
+                                        updateCount: (oldData?.updateCount || 0) + 1
+                                    });
+                                    
+                                    this.addFeedEntry(
+                                        `Trade: ${product} ${trade.side.toUpperCase()} ${trade.size} @ $${tradePrice.toFixed(2)}`
+                                    );
+                                });
+                            }
+                        }
+                    });
+                }
+                document.getElementById('dataPoints').textContent = this.dataPoints.size.toLocaleString();
+            }
+
+            handleLevel2Data(message) {
+                if (message.events && Array.isArray(message.events)) {
+                    message.events.forEach((event, idx) => {
+                        // Full diagnostic dump
+                        console.log(`L2 Event ${idx}:`, JSON.stringify(event));
+                        console.log('Keys:', Object.keys(event));
+                        
+                        // Check if it's a snapshot/update event
+                        if (event.type) {
+                            console.log('Event type:', event.type);
+                        }
+                        
+                        // Try to extract data from various possible structures
+                        if (event.bids && event.asks) {
+                            console.log('Found bids and asks');
+                            const topBidPrice = parseFloat(event.bids[0]?.[0]);
+                            const topAskPrice = parseFloat(event.asks[0]?.[0]);
+                            console.log(`Bid: ${topBidPrice}, Ask: ${topAskPrice}`);
+                            
+                            const midPrice = topBidPrice && topAskPrice ? (topBidPrice + topAskPrice) / 2 : topBidPrice || topAskPrice;
+                            
+                            // Apply to all subscribed products
+                            this.productIds.forEach(product => {
+                                if (midPrice) {
+                                    const oldData = this.dataPoints.get(product);
+                                    let priceChange = 0;
+                                    if (oldData && oldData.price && midPrice) {
+                                        priceChange = midPrice - oldData.price;
+                                    }
+                                    
+                                    this.dataPoints.set(product, {
+                                        price: midPrice,
+                                        bid: topBidPrice,
+                                        ask: topAskPrice,
+                                        productId: product,
+                                        time: new Date().toLocaleTimeString(),
+                                        rawPrice: midPrice.toString(),
+                                        priceChange: priceChange,
+                                        lastUpdate: Date.now(),
+                                        updateCount: (oldData?.updateCount || 0) + 1
+                                    });
+                                }
+                            });
+                            this.addFeedEntry(`L2: Bid $${topBidPrice?.toFixed(2)} / Ask $${topAskPrice?.toFixed(2)}`);
+                        } else if (idx === 0) {
+                            // Log only first event to avoid spam
+                            this.addFeedEntry(`[DEBUG] L2 event keys: ${Object.keys(event).join(', ')}`);
+                        }
+                    });
+                }
+                document.getElementById('dataPoints').textContent = this.dataPoints.size.toLocaleString();
+            }
+
+            addFeedEntry(text) {
+                const now = new Date().toLocaleTimeString();
+                this.feedEntries.unshift({
+                    time: now,
+                    text: text
+                });
+
+                if (this.feedEntries.length > this.maxEntries) {
+                    this.feedEntries.pop();
+                }
+
+                this.renderFeed();
+            }
+
+            renderFeed() {
+                const feedEl = document.getElementById('feed');
+                
+                if (this.feedEntries.length === 0) {
+                    feedEl.innerHTML = '<div class="empty">Waiting for data...</div>';
+                    return;
+                }
+
+                feedEl.innerHTML = this.feedEntries.map(entry => `
+                    <div class="feed-entry">
+                        <span class="feed-time">${entry.time}</span>
+                        <span class="feed-data">${entry.text}</span>
+                    </div>
+                `).join('');
+            }
+
+            renderPriceCards() {
+                const container = document.getElementById('priceCards');
+                
+                if (this.dataPoints.size === 0) {
+                    container.innerHTML = '<div class="empty">No price data yet</div>';
+                    return;
+                }
+
+                const sortedData = Array.from(this.dataPoints.values())
+                    .sort((a, b) => a.productId.localeCompare(b.productId));
+
+                const self = this;
+                const now = Date.now();
+                container.innerHTML = sortedData.map(data => {
+                    const timeSinceUpdate = now - (data.lastUpdate || 0);
+                    const showActivity = timeSinceUpdate < 2000;
+                    const changeArrow = data.priceChange > 0 ? '⬆' : data.priceChange < 0 ? '⬇' : '→';
+                    const formattedPrice = this.formatPrice(data.rawPrice || data.price);
+                    const priceWithCommas = this.addCommas(formattedPrice);
+                    return `
+                    <div class="price-card">
+                        <h3>
+                            ${showActivity ? '<span class="activity-badge"></span>' : ''}
+                            ${data.productId}
+                        </h3>
+                        ${data.price && data.price !== 'N/A' ? `
+                            <div class="price-row">
+                                <span class="price-label">Price:</span>
+                                <span class="price-value ${data.priceChange > 0 ? 'price-up' : data.priceChange < 0 ? 'price-down' : ''}">$${priceWithCommas} <span style="font-size: 14px;">${changeArrow}</span></span>
+                            </div>
+                        ` : ''}
+                        ${data.bid && data.bid !== 'N/A' ? `
+                            <div class="price-row">
+                                <span class="price-label">Bid:</span>
+                                <span class="price-value">$${this.addCommas(parseFloat(data.bid).toFixed(2))}</span>
+                            </div>
+                        ` : ''}
+                        ${data.ask && data.ask !== 'N/A' ? `
+                            <div class="price-row">
+                                <span class="price-label">Ask:</span>
+                                <span class="price-value">$${this.addCommas(parseFloat(data.ask).toFixed(2))}</span>
+                            </div>
+                        ` : ''}
+                        <div class="price-row">
+                            <span class="price-label">Updated:</span>
+                            <span class="price-value update-info">${data.time} (#${data.updateCount})</span>
+                        </div>
+                    </div>
+                `;
+                }).join('');
+            }
+
+            updateConnectionTime() {
+                if (!this.connectionStartTime) return;
+                
+                const elapsed = Math.floor((Date.now() - this.connectionStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                
+                document.getElementById('connectionTime').textContent = 
+                    `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }
+
+            updateStatus() {
+                const container = document.getElementById('status-container');
+                const status = this.isConnected ? 'connected' : 'disconnected';
+                const text = this.isConnected ? 'Connected' : 'Disconnected';
+                
+                container.innerHTML = `
+                    <div class="status ${status}">
+                        <div class="status-indicator"></div>
+                        <span>${text}</span>
+                    </div>
+                `;
+
+                document.getElementById('connectBtn').disabled = this.isConnected;
+                document.getElementById('disconnectBtn').disabled = !this.isConnected;
+            }
+
+            showError(message) {
+                const container = document.getElementById('error-container');
+                container.innerHTML = `<div class="error-message">${message}</div>`;
+                setTimeout(() => {
+                    container.innerHTML = '';
+                }, 5000);
+            }
+
+            formatPrice(priceStr) {
+                const price = parseFloat(priceStr);
+                if (isNaN(price)) return 'N/A';
+                
+                // Use 8 decimals for low-value coins (< $1), 2 for others
+                if (price < 1) {
+                    return price.toFixed(8);
+                }
+                return price.toFixed(2);
+            }
+
+            addCommas(priceStr) {
+                // Split by decimal point
+                const parts = priceStr.split('.');
+                const integerPart = parts[0];
+                const decimalPart = parts[1] || '';
+                
+                // Add commas to integer part
+                const withCommas = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                
+                // Recombine
+                return decimalPart ? `${withCommas}.${decimalPart}` : withCommas;
+            }
+
+            disconnect() {
+                this.unsubscribe();
+                if (this.ws) {
+                    this.ws.close();
+                    this.ws = null;
+                }
+                this.isConnected = false;
+                this.updateStatus();
+                clearInterval(this.connectionTimer);
+            }
+        }
+
+        // Initialize
+        const stream = new CoinbaseMarketStream();
+
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        
+        // Check for saved theme preference or default to light
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        if (currentTheme === 'dark') {
+            html.classList.add('dark');
+            themeToggle.textContent = '☀️ Light Mode';
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const newTheme = html.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+            themeToggle.textContent = newTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+        });
+
+        document.getElementById('connectBtn').addEventListener('click', () => {
+            const productIds = document.getElementById('productIds').value
+                .split(',')
+                .map(p => p.trim())
+                .filter(p => p);
+            const channel = document.getElementById('channel').value;
+            
+            if (productIds.length === 0) {
+                stream.showError('Please enter at least one product ID');
+                return;
+            }
+
+            stream.maxEntries = parseInt(document.getElementById('maxEntries').value) || 100;
+            stream.connect(productIds, channel);
+        });
+
+        document.getElementById('disconnectBtn').addEventListener('click', () => {
+            stream.disconnect();
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            stream.feedEntries = [];
+            stream.renderFeed();
+        });
+    </script>
+</body>
+</html>
