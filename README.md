@@ -1,3 +1,11 @@
+```
+ ┌───────┐
+ │ BUNIT │
+ └───────┘
+```
+
+
+
 # marketstream
 ## Coinbase Market Data Stream
 <i>Real-time cryptocurrency price data from Coinbase Advanced Trade API</i>
@@ -48,6 +56,10 @@ A lightweight web UI for streaming real‑time cryptocurrency market data from t
 
 ## Getting started
 
+> [!NOTE]
+>  Most modern web browsers can display the single html file and stream the real time market data without the use of a webserver. <br>
+> Just open the *marketstream.html* file using your favorite browser and watch live.
+
 ### Prerequisites
 
 - Any modern browser (Firefox, Chrome, Safari, Edge).
@@ -67,7 +79,7 @@ python3 -m http.server 8000
 3. Open the app in your browser:
 
 ```text
-http://localhost:8000/Coinbase%20Market%20Data%20Stream.html
+http://localhost:8000/marketstream.html
 ```
 
 4. In the UI:
