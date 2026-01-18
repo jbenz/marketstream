@@ -30,10 +30,9 @@ Coinbase Market Data Stream is a single‑page web UI for visualizing real‑tim
 
 ---
 
-<img alt="Light Dashboard now w/options menu" src="https://github.com/user-attachments/assets/f08cd497-f64d-4f7d-ae36-6a6312ac83a8" />
-
-<img alt="Dark Dashboard now w/options " src="https://github.com/user-attachments/assets/6ca2223e-8f93-4789-864b-f1ff2a8ec9e9" />
-
+     
+| <img alt="Light Dashboard now w/options menu" src="https://github.com/user-attachments/assets/f08cd497-f64d-4f7d-ae36-6a6312ac83a8" /></td> |<td><img alt="Dark Dashboard now w/options " src="https://github.com/user-attachments/assets/6ca2223e-8f93-4789-864b-f1ff2a8ec9e9" /></td> | <td rowspan="2"><img alt="Mobile Friendly" src="https://github.com/user-attachments/assets/c60ec237-fb71-4a4e-a46a-74ebe046c9af" /></td> |
+| --- | --- | --- |
 
 # Coinbase Market Data Stream
 
