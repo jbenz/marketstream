@@ -1,4 +1,9 @@
 <!DOCTYPE html>
+<!--
+MarketStream - Real-time cryptocurrency price data from Coinbase Advanced Trade API
+A modern dashboard for streaming and visualizing live cryptocurrency market data
+GitHub: https://github.com/jbenz/marketstream
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -234,6 +239,7 @@
             border: 1px solid var(--color-border);
             border-radius: 8px;
             font-family: var(--font-mono);
+            position: relative;
         }
 
         .price-card h3 {
@@ -246,7 +252,7 @@
         }
 
         .activity-badge {
-            display: inline-flex;
+            display: flex;
             align-items: center;
             justify-content: center;
             width: 6px;
@@ -255,6 +261,9 @@
             background: var(--color-text-secondary);
             animation: activity-pulse 1s ease-in-out;
             flex-shrink: 0;
+            position: absolute;
+            top: 12px;
+            right: 12px;
         }
 
         @keyframes activity-pulse {
@@ -310,10 +319,11 @@
             border: 1px solid var(--color-border);
             border-radius: 8px;
             padding: 16px;
-            max-height: 500px;
-            overflow-y: auto;
+            max-height: 250px;
+            overflow: auto;
             font-family: var(--font-mono);
             font-size: 12px;
+            resize: vertical;
         }
 
         .feed-entry {
@@ -363,75 +373,200 @@
             border-radius: 3px;
             font-family: var(--font-mono);
         }
+
+        .menu-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 150ms ease;
+        }
+
+        .menu-toggle:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .menu-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            min-width: 400px;
+            padding: 16px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .menu-dropdown.open {
+            display: block;
+        }
+
+        .menu-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            padding: 0;
+            margin: 0;
+            background: transparent;
+            border: none;
+        }
+
+        .crypto-logo {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .crypto-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: white;
+            font-weight: 600;
+            font-size: 11px;
+            flex-shrink: 0;
+            font-family: var(--font-family);
+        }
+
+        .crypto-badge.has-image {
+            color: transparent;
+        }
+
+        footer {
+            margin-top: 40px;
+            padding-top: 24px;
+            border-top: 1px solid var(--color-border);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--color-text-secondary);
+        }
+
+        footer img {
+            height: 20px;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>Coinbase Market Data Stream</h1>
-            <p class="subtitle">Real-time cryptocurrency price data from Coinbase Advanced Trade API</p>
-        </header>
-
         <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <div id="status-container"></div>
-            <button id="themeToggle" style="padding: 6px 12px; background: var(--color-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;">🌙 Dark Mode</button>
+            <a href="https://github.com/jbenz/marketstream" target="_blank" style="text-decoration: none; color: var(--color-text-primary);"><h1 style="margin: 0; font-size: 32px; font-weight: 600;"><strong>Market</strong>Stream</h1></a>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button class="btn-primary" id="quickConnectBtn" style="padding: 8px 16px;">Connect</button>
+                <div class="menu-container">
+                    <button class="menu-toggle" id="menuToggle">⚙️ Options</button>
+                    <div class="menu-dropdown" id="menuDropdown">
+                        <div style="padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--color-border);">
+                            <p style="margin: 0 0 6px 0; font-size: 14px; font-weight: 600;">MarketStream</p>
+                            <p style="margin: 0; font-size: 12px; color: var(--color-text-secondary); line-height: 1.4;">Real-time cryptocurrency price data from Coinbase Advanced Trade API</p>
+                            <a href="https://github.com/jbenz/marketstream" target="_blank" style="display: inline-block; margin-top: 8px; padding: 6px 12px; background: var(--color-primary); color: white; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: 500;">GitHub Repository</a>
+                        </div>
+                        <div class="controls">
+                            <div class="control-group">
+                                <label>Product IDs (comma-separated)</label>
+                                <input type="text" id="productIds" value="BTC-USD,ETH-USD,SOL-USD,DOGE-USD,MON-USD,AMP-USD,PEPE-USD,SHIB-USD,BAT-USD,BCH-USD,POL-USD,XRP-USD" placeholder="BTC-USD,ETH-USD">
+                            </div>
+                            <div class="control-group">
+                                <label>Channel</label>
+                                <select id="channel">
+                                    <option value="ticker">Ticker (Real-time)</option>
+                                    <option value="ticker_batch">Ticker Batch (5s)</option>
+                                    <option value="market_trades">Market Trades</option>
+                                    <option value="level2">Level 2 Orderbook</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Max Feed Entries</label>
+                                <input type="number" id="maxEntries" value="100" min="10" max="1000">
+                            </div>
+                            <div class="control-group" style="flex-direction: row; align-items: center; gap: 12px;">
+                                <input type="checkbox" id="autoconnect" checked style="width: 18px; height: 18px; cursor: pointer;">
+                                <label style="margin: 0; text-transform: none; letter-spacing: normal;">Auto-connect on page load</label>
+                            </div>
+                            <div class="control-group" style="flex-direction: row; align-items: center; gap: 12px;">
+                                <input type="checkbox" id="showLogos" checked style="width: 18px; height: 18px; cursor: pointer;">
+                                <label style="margin: 0; text-transform: none; letter-spacing: normal;">Show crypto logos</label>
+                            </div>
+                            <div class="control-group" style="flex-direction: row; align-items: center; gap: 12px;">
+                                <input type="checkbox" id="showLiveFeed" checked style="width: 18px; height: 18px; cursor: pointer;">
+                                <label style="margin: 0; text-transform: none; letter-spacing: normal;">Show live feed</label>
+                            </div>
+                            <div class="button-group" style="grid-column: 1 / -1;">
+                                <button class="btn-secondary" id="clearBtn">Clear Feed</button>
+                            </div>
+                            <div class="button-group" style="grid-column: 1 / -1; border-top: 1px solid var(--color-border); padding-top: 12px; margin-top: 12px;">
+                                <button id="themeToggle" class="btn-secondary" style="width: 100%; padding: 8px 16px;">🌙 Dark Mode</button>
+                            </div>
+                            <div style="grid-column: 1 / -1; border-top: 1px solid var(--color-border); padding-top: 12px; margin-top: 12px;">
+                                <p style="margin: 0 0 12px 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-text-secondary);">Diagnostic Information</p>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                                    <div style="padding: 8px; background: var(--color-bg-primary); border: 1px solid var(--color-border); border-radius: 4px;">
+                                        <div style="font-size: 10px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Messages</div>
+                                        <div style="font-size: 16px; font-weight: 600; font-family: var(--font-mono);" id="messageCount">0</div>
+                                    </div>
+                                    <div style="padding: 8px; background: var(--color-bg-primary); border: 1px solid var(--color-border); border-radius: 4px;">
+                                        <div style="font-size: 10px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Connection Time</div>
+                                        <div style="font-size: 16px; font-weight: 600; font-family: var(--font-mono);" id="connectionTime">--:--</div>
+                                    </div>
+                                    <div style="padding: 8px; background: var(--color-bg-primary); border: 1px solid var(--color-border); border-radius: 4px;">
+                                        <div style="font-size: 10px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Data Points</div>
+                                        <div style="font-size: 16px; font-weight: 600; font-family: var(--font-mono);" id="dataPoints">0</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="error-container"></div>
 
-        <div class="controls">
-            <div class="control-group">
-                <label>Product IDs (comma-separated)</label>
-                <input type="text" id="productIds" value="BTC-USD,ETH-USD,SOL-USD,DOGE-USD,MON-USD,AMP-USD,PEPE-USD,SHIB-USD,BAT-USD,BCH-USD,POL-USD,XRP-USD" placeholder="BTC-USD,ETH-USD">
-            </div>
-            <div class="control-group">
-                <label>Channel</label>
-                <select id="channel">
-                    <option value="ticker">Ticker (Real-time)</option>
-                    <option value="ticker_batch">Ticker Batch (5s)</option>
-                    <option value="market_trades">Market Trades</option>
-                    <!-- currently inoperable and under development...
-                    <option value="level2">Level 2 Orderbook</option>
-                    -->
-                </select>
-            </div>
-            <div class="control-group">
-                <label>Max Feed Entries</label>
-                <input type="number" id="maxEntries" value="100" min="10" max="1000">
-            </div>
-            <div class="button-group" style="grid-column: 1 / -1;">
-                <button class="btn-primary" id="connectBtn">Connect</button>
-                <button class="btn-secondary" id="disconnectBtn" disabled>Disconnect</button>
-                <button class="btn-secondary" id="clearBtn">Clear Feed</button>
-            </div>
+        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0;">Latest Prices</h3>
+            <div id="status-container"></div>
         </div>
+        <div class="market-data" id="priceCards"></div>
 
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-label">Messages Received</div>
-                <div class="stat-value" id="messageCount">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Connection Time</div>
-                <div class="stat-value" id="connectionTime">--:--</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Data Points</div>
-                <div class="stat-value" id="dataPoints">0</div>
-            </div>
-        </div>
-
-        <div style="margin-bottom: 20px;">
-            <h3>Latest Prices</h3>
-            <div class="market-data" id="priceCards"></div>
-        </div>
-
-        <div>
+        <div id="liveFeedSection">
             <h3>Live Feed</h3>
             <div class="feed" id="feed">
                 <div class="empty">Waiting for data... Connect to start streaming.</div>
             </div>
         </div>
+
+        <footer>
+            <span>Market Data Provided By</span>
+            <img id="coinbaseFooterLogo" src="https://raw.githubusercontent.com/jbenz/marketstream/refs/heads/main/cb_svg/Coinbase_Wordmark.svg" alt="Coinbase">
+        </footer>
     </div>
 
     <script>
@@ -447,6 +582,26 @@
                 this.connectionTimer = null;
                 this.productIds = [];
                 this.channel = 'ticker';
+                this.logoCache = new Map();
+                this.logoFetching = new Set();
+                // Coins that have logos available in CoinCap
+                this.coinsWithLogos = new Set([
+                    'BTC', 'ETH', 'SOL', 'DOGE', 'XRP', 'BAT', 'BCH', 'PEPE', 'SHIB', 'POL', 'AMP'
+                ]);
+                this.cryptoMap = {
+                    'BTC': 'bitcoin',
+                    'ETH': 'ethereum',
+                    'SOL': 'solana',
+                    'DOGE': 'dogecoin',
+                    'XRP': 'ripple',
+                    'BAT': 'basic-attention-token',
+                    'BCH': 'bitcoin-cash',
+                    'MON': 'monero',
+                    'AMP': 'amp-token',
+                    'PEPE': 'pepe',
+                    'SHIB': 'shiba-inu',
+                    'POL': 'polygon'
+                };
             }
 
             connect(productIds, channel) {
@@ -696,6 +851,16 @@
                 this.renderFeed();
             }
 
+            getLogo(productId) {
+                const symbol = productId.split('-')[0];
+                const cryptoId = this.cryptoMap[symbol];
+                if (!cryptoId || !this.coinsWithLogos.has(symbol)) return null;
+                
+                // Use CoinCap's icon service - simple and reliable
+                const iconUrl = `https://assets.coincap.io/assets/icons/${symbol.toLowerCase()}@2x.png`;
+                return iconUrl;
+            }
+
             renderFeed() {
                 const feedEl = document.getElementById('feed');
                 
@@ -725,16 +890,34 @@
 
                 const self = this;
                 const now = Date.now();
+                const showLogos = document.getElementById('showLogos')?.checked ?? true;
                 container.innerHTML = sortedData.map(data => {
                     const timeSinceUpdate = now - (data.lastUpdate || 0);
                     const showActivity = timeSinceUpdate < 2000;
                     const changeArrow = data.priceChange > 0 ? '⬆' : data.priceChange < 0 ? '⬇' : '→';
                     const formattedPrice = this.formatPrice(data.rawPrice || data.price);
                     const priceWithCommas = this.addCommas(formattedPrice);
+                    const symbol = data.productId.split('-')[0];
+                    
+                    let logoHtml = '';
+                    if (showLogos) {
+                        const logo = this.getLogo(data.productId);
+                        // Custom colors for specific coins
+                        const coinColors = {
+                            'MON': 'background: linear-gradient(135deg, #6E54FF, #5a40dd);'
+                        };
+                        const customStyle = coinColors[symbol] || '';
+                        if (logo) {
+                            logoHtml = `<div class="crypto-badge has-image" style="background-image: url('${logo}'); ${customStyle}">${symbol}</div>`;
+                        } else {
+                            logoHtml = `<div class="crypto-badge" style="${customStyle}">${symbol}</div>`;
+                        }
+                    }
                     return `
                     <div class="price-card">
+                        ${showActivity ? '<span class="activity-badge"></span>' : ''}
                         <h3>
-                            ${showActivity ? '<span class="activity-badge"></span>' : ''}
+                            ${logoHtml}
                             ${data.productId}
                         </h3>
                         ${data.price && data.price !== 'N/A' ? `
@@ -786,9 +969,6 @@
                         <span>${text}</span>
                     </div>
                 `;
-
-                document.getElementById('connectBtn').disabled = this.isConnected;
-                document.getElementById('disconnectBtn').disabled = !this.isConnected;
             }
 
             showError(message) {
@@ -837,6 +1017,47 @@
 
         // Initialize
         const stream = new CoinbaseMarketStream();
+        let autoconnectEnabled = localStorage.getItem('autoconnect') !== 'false';
+        document.getElementById('autoconnect').checked = autoconnectEnabled;
+
+        // Auto-connect on page load if enabled
+        if (autoconnectEnabled) {
+            setTimeout(() => {
+                const productIds = document.getElementById('productIds').value
+                    .split(',')
+                    .map(p => p.trim())
+                    .filter(p => p);
+                const channel = document.getElementById('channel').value;
+                if (productIds.length > 0) {
+                    stream.maxEntries = parseInt(document.getElementById('maxEntries').value) || 100;
+                    stream.connect(productIds, channel);
+                }
+            }, 500);
+        }
+
+        // Menu toggle functionality
+        const menuToggle = document.getElementById('menuToggle');
+        const menuDropdown = document.getElementById('menuDropdown');
+        
+        menuToggle.addEventListener('click', () => {
+            menuDropdown.classList.toggle('open');
+        });
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.menu-container')) {
+                menuDropdown.classList.remove('open');
+            }
+        });
+        
+        // Close menu when a button is clicked (except theme toggle)
+        menuDropdown.querySelectorAll('button').forEach(btn => {
+            if (btn.id !== 'themeToggle') {
+                btn.addEventListener('click', () => {
+                    menuDropdown.classList.remove('open');
+                });
+            }
+        });
 
         // Theme toggle
         const themeToggle = document.getElementById('themeToggle');
@@ -847,6 +1068,7 @@
         if (currentTheme === 'dark') {
             html.classList.add('dark');
             themeToggle.textContent = '☀️ Light Mode';
+            document.getElementById('coinbaseFooterLogo').src = 'https://raw.githubusercontent.com/jbenz/marketstream/refs/heads/main/cb_svg/Coinbase_Wordmark_White.svg';
         }
         
         themeToggle.addEventListener('click', () => {
@@ -854,26 +1076,55 @@
             const newTheme = html.classList.contains('dark') ? 'dark' : 'light';
             localStorage.setItem('theme', newTheme);
             themeToggle.textContent = newTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+            // Switch footer logo
+            const footerLogo = document.getElementById('coinbaseFooterLogo');
+            footerLogo.src = newTheme === 'dark' ? 'https://raw.githubusercontent.com/jbenz/marketstream/refs/heads/main/cb_svg/Coinbase_Wordmark_White.svg' : 'https://raw.githubusercontent.com/jbenz/marketstream/refs/heads/main/cb_svg/Coinbase_Wordmark.svg';
         });
 
-        document.getElementById('connectBtn').addEventListener('click', () => {
-            const productIds = document.getElementById('productIds').value
-                .split(',')
-                .map(p => p.trim())
-                .filter(p => p);
-            const channel = document.getElementById('channel').value;
-            
-            if (productIds.length === 0) {
-                stream.showError('Please enter at least one product ID');
-                return;
+        document.getElementById('quickConnectBtn').addEventListener('click', () => {
+            if (stream.isConnected) {
+                stream.disconnect();
+            } else {
+                const productIds = document.getElementById('productIds').value
+                    .split(',')
+                    .map(p => p.trim())
+                    .filter(p => p);
+                const channel = document.getElementById('channel').value;
+                
+                if (productIds.length === 0) {
+                    stream.showError('Please enter at least one product ID');
+                    return;
+                }
+
+                stream.maxEntries = parseInt(document.getElementById('maxEntries').value) || 100;
+                stream.connect(productIds, channel);
             }
-
-            stream.maxEntries = parseInt(document.getElementById('maxEntries').value) || 100;
-            stream.connect(productIds, channel);
         });
 
-        document.getElementById('disconnectBtn').addEventListener('click', () => {
-            stream.disconnect();
+        // Update button text when connection state changes
+        const originalUpdateStatus = stream.updateStatus.bind(stream);
+        stream.updateStatus = function() {
+            originalUpdateStatus();
+            const btn = document.getElementById('quickConnectBtn');
+            if (btn) {
+                btn.textContent = this.isConnected ? 'Disconnect' : 'Connect';
+                btn.classList.toggle('btn-primary', !this.isConnected);
+                btn.classList.toggle('btn-secondary', this.isConnected);
+            }
+        };
+
+        document.getElementById('autoconnect').addEventListener('change', (e) => {
+            autoconnectEnabled = e.target.checked;
+            localStorage.setItem('autoconnect', autoconnectEnabled);
+        });
+
+        document.getElementById('showLogos').addEventListener('change', () => {
+            stream.renderPriceCards();
+        });
+
+        document.getElementById('showLiveFeed').addEventListener('change', (e) => {
+            const liveFeedSection = document.getElementById('liveFeedSection');
+            liveFeedSection.style.display = e.target.checked ? 'block' : 'none';
         });
 
         document.getElementById('clearBtn').addEventListener('click', () => {
