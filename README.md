@@ -13,7 +13,7 @@
 Coinbase Market Data Stream is a single‑page web UI for visualizing real‑time cryptocurrency market data from the Coinbase Advanced Trade WebSocket API. It connects to Coinbase’s public market‑data endpoint and displays live prices, order‑book information, and raw feed events for multiple products simultaneously.
 
 ## Live example 
-[https://marketstream.madrot.workers.dev](https://marketstream.madrot.workers.dev)
+[https://marketstream.bunit.net](https://marketstream.bunit.net)
 
 
 # Key features
